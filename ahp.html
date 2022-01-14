@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Title</title>
+    <!-- Required meta tags -->
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, shrink-to-fit=no"
+    />
+
+    <!-- Bootstrap CSS -->
+    <link
+      rel="stylesheet"
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+      integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T"
+      crossorigin="anonymous"
+    />
+    <style>
+      #fSS {
+        display: none;
+      }
+      #fRS {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="row">
+        <form action="" name="AHP">
+          Số tiêu chí:
+          <input type="text" name="criteria" onkeyup="countInp()" />
+        </form>
+      </div>
+      <div class="row mt-2">
+        <form action="" id="fCriteria"></form>
+      </div>
+      <div class="row mt-2">
+        <form action="" name="ss" id="fSS"></form>
+      </div>
+      <div class="row mt-2">
+        <form action="" name="rs" id="fRS">
+          CI:
+          <input type="text" name="CI" />
+          RI:
+          <input type="text" name="RI" />
+          CR:
+          <input type="text" name="CR" />
+        </form>
+      </div>
+    </div>
+
+    <script>
+      var countCriteria = 0;
+      function countInp() {
+        //get quantity criteria
+        let count = document.forms["AHP"]["criteria"].value;
+        countCriteria = parseInt(count);
+        let inpCriteria = "";
+        for (let i = 1; i <= count; i++) {
+          let criteria = "Tiêu chí " + i + ':  <input type="text"/> </br>';
+          inpCriteria += criteria;
+        }
+        inpCriteria =
+          inpCriteria +
+          '<button class="btn btn-success btn-submit" onclick="showFSS(event)">Tiếp tục</button>';
+        document.forms["fCriteria"].innerHTML = inpCriteria;
+        //create table criteria
+        document.getElementById("fSS").style.width =
+          (parseInt(count) + 1) * 10 + "rem";
+        item = (parseInt(count) + 1) * (parseInt(count) + 1);
+        let inpTmp = '<input type="text" onkeyup="calculator()"/>';
+        let inp = "";
+        for (let i = 1; i <= item; i++) {
+          inp += inpTmp;
+        }
+        document.forms["ss"].innerHTML = inp;
+        document.querySelectorAll("#fSS input").forEach((e) => {
+          e.style.width = "10rem";
+        });
+      }
+      function showFSS(e) {
+        e.preventDefault();
+        document.getElementById("fSS").style.display = "block";
+
+        // document.forms["AHP"].style.display = "none";
+        let criteria = [];
+        document.querySelectorAll("#fCriteria input").forEach((e) => {
+          criteria.push(e.value);
+        });
+        // document.getElementById("fCriteria").style.display = "none";
+        let item = document.querySelectorAll("#fSS input");
+        for (let i = 1; i <= countCriteria; i++) {
+          item.item(i).value = criteria[i - 1];
+          item.item(i).setAttribute("readonly", true);
+        }
+        let tmp = 0;
+        for (
+          let i = 1 + countCriteria;
+          i <= item.length - (1 + countCriteria);
+          i++
+        ) {
+          //   console.log(tmp);
+          item.item(i).value = criteria[tmp];
+          item.item(i).setAttribute("readonly", true);
+          tmp++;
+          i = i + (countCriteria + 1) - 1;
+        }
+      }
+      function calculator() {
+        //get value criteria
+        let value = [];
+        let ahp = document.querySelectorAll("#fSS input");
+        for (i = 0; i <= ahp.length; i++) {
+          if (i <= countCriteria || i % (countCriteria + 1) == 0) {
+            continue;
+          }
+          value.push(ahp.item(i).value);
+        }
+        // console.log(value);
+        //loop sum criteria
+        let sum = [];
+        let sumContent =
+          "parseInt(value[i]) + parseInt(value[i + countCriteria])";
+        for (let i = 0; i < countCriteria; i++) {
+          if (i > 1) {
+            sumContent += "+ parseInt(value[i + countCriteria * " + i + "])";
+          }
+        }
+        for (let i = 0; i < value.length; i++) {
+          if (value[i + countCriteria * (countCriteria - 1)]) {
+            sum.push(eval(sumContent));
+          } else {
+            break;
+          }
+        }
+
+        console.log(value);
+        console.log(sum);
+        //Normalised Pair-wise matrix
+        value1 = [];
+        s = 0;
+        countSum = sum.length;
+        for (let i = 0; i < value.length; i++) {
+          if (s == countSum) {
+            s = 0;
+          }
+          value1.push(parseInt(value[i]) / parseInt(sum[s]));
+          // console.log(value[i] + "/" + sum[s]);
+          s++;
+        }
+        console.log(value1);
+
+        //calculate criteria weights
+        sum2 = [];
+        for (let i = 0; i < value1.length; i++) {
+          if ((i + 1) % countCriteria == 0) {
+            i++;
+          }
+          if (i == value1.length) {
+            break;
+          }
+          // console.log(value1[i] + "+" + value1[i + 1]);
+          sum2.push(value1[i] + value1[i + 1]);
+        }
+        console.log(sum2);
+
+        //calculate Consistency Rate CR
+        console.log(value);
+        s2 = 0;
+        countSum2 = sum2.length;
+        value3 = [];
+        for (let i = 0; i < value.length; i++) {
+          if (s2 == countSum2) {
+            s2 = 0;
+          }
+          value3.push(value[i] * sum2[s2]);
+          //console.log(value[i] + "*" + sum2[s2]);
+          s2++;
+        }
+        console.log(value3);
+
+        //calculate sum CR weighted
+        sum3 = [];
+        for (let i = 0; i < value3.length; i++) {
+          if ((i + 1) % countCriteria == 0) {
+            i++;
+          }
+          if (i == value3.length) {
+            break;
+          }
+          //console.log(value3[i] + "+" + value3[i + 1]);
+          sum3.push(value3[i] + value3[i + 1]);
+        }
+        console.log("sum3" + sum3);
+
+        //calculate Consistency vector
+        cv = [];
+        // console.log(sum3);
+        // console.log(sum2);
+        for (let i = 0; i < sum3.length; i++) {
+          //console.log(sum3[i] + "/" + sum2[i]);
+          cv.push(sum3[i] / sum2[i]);
+        }
+        // console.log(cv);
+
+        //calculate lamda max
+        lamda = 0;
+        for (let i = 0; i < cv.length; i++) {
+          lamda += cv[i];
+        }
+        lamda = lamda / countCriteria;
+        console.log(lamda);
+
+        //calculate CI
+        ci = (lamda - countCriteria) / (countCriteria - 1);
+        console.log(ci);
+
+        //calculate CR
+        RI = 0;
+        switch (countCriteria) {
+          case 1:
+            RI = 0.0;
+            break;
+          case 2:
+            RI = 0.0;
+            break;
+          case 3:
+            RI = 0.58;
+            break;
+          case 4:
+            RI = 0.9;
+            break;
+          case 5:
+            RI = 1.12;
+            break;
+          case 6:
+            RI = 1.24;
+            break;
+          case 7:
+            RI = 1.32;
+            break;
+          case 8:
+            RI = 1.41;
+            break;
+          case 9:
+            RI = 1.45;
+            break;
+          case 10:
+            RI = 1.49;
+            break;
+          case 11:
+            RI = 1.51;
+            break;
+          case 12:
+            RI = 1.54;
+            break;
+          case 13:
+            RI = 1.56;
+            break;
+          case 14:
+            RI = 1.57;
+            break;
+          case 15:
+            RI = 1.59;
+            break;
+        }
+
+        console.log(RI);
+        cr = ci / RI;
+        console.log(cr);
+
+        document.forms["rs"].style.display = "block";
+        document.forms["rs"]["CI"].value = ci;
+        document.forms["rs"]["RI"].value = RI;
+        document.forms["rs"]["CR"].value = cr;
+      }
+    </script>
+    <!-- Optional JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script
+      src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
+      integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
+      integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
+      integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
+      crossorigin="anonymous"
+    ></script>
+  </body>
+</html>
